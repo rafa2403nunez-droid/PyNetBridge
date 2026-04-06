@@ -210,6 +210,3 @@ def configure_output_window(pid: int, is_available: bool) -> str:
         "Content": str(is_available).lower()
     }
     return send_to_pipe(pid, payload)
-
-if __name__ == "__main__":
-    mcp.run()
