@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "name": "PyNet Bridge",
+  "description": "Official MCP server for RAEN Digital Tools. Connects AI models with Autodesk tools via the PyNet ecosystem.",
+  "author": "RAEN Digital Tools",
+  "repository": "https://github.com/rafa2403nunez-droid/PyNetBridge",
+  "keywords": [
+    "BIM",
+    "Navisworks",
+    "Revit",
+    "Autodesk",
+    "Engineering",
+    "Architecture",
+    "Construction"
+  ],
+  "homepage": "https://github.com/rafa2403nunez-droid/PyNetBridge",
+  "license": "MIT"
+}
