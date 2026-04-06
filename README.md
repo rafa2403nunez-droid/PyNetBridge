@@ -44,10 +44,7 @@ To allow Claude to control your BIM environment, add the server to your Claude D
   "mcpServers": {
     "pynet-platform": {
       "command": "pynet-bridge",
-      "args": [],
-      "env": {
-        "PYTHONPATH": "path/to/your/src" 
-      }
+      "args": []
     }
   }
 }
@@ -82,9 +79,8 @@ Once connected, the AI will have access to the full suite of PyNet tools:
 
 ## 📂 Project Structure
 
-* **src/pynet_mcp/**: Core MCP server logic (FastMCP).
+* **pynet_mcp/**: Core MCP server logic (FastMCP).
 * **pyproject.toml**: Package configuration and dependency management.
-* **Connectors/**: C# Plugins for Navisworks/Revit (Core integration).
 
 ---
 
