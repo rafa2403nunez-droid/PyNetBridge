@@ -1,4 +1,4 @@
-# 🏗️ PyNet Platform Bridge (MCP)
+# 🐍 PyNet Platform Bridge (MCP)
 
 **PyNet Platform Bridge** is a Model Context Protocol (MCP) server that enables AI models (such as Claude, GPT-4o, or Gemini) to interact directly with **Autodesk Tools** through the PyNet Platform.
 
