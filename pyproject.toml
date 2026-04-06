@@ -15,4 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pynet-bridge = "pynet_mcp.server:mcp.run"
+pynet-bridge = "pynet_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pynet_mcp"]
