@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/PyNetBridge.png" width="150"/>
+</p>
+
+
 # 🐍 PyNet Platform Bridge (MCP)
 
 **PyNet Platform Bridge** is a Model Context Protocol (MCP) server that enables AI models (such as Claude, GPT-4o, or Gemini) to interact directly with **Autodesk Tools** through the PyNet Platform.
@@ -92,5 +97,5 @@ This project is licensed under the MIT License.
 Built with ❤️ for the BIM Community by [rafa2403nunez](https://github.com/rafa2403nunez-droid)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/rafa2403nunez-droid/PyNetBridge/develop/Assets/RAEN%20Digital%20Tools.png" alt="RAEN Digital Tools" width="200">
+  <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/RAENDigitalTools.png" alt="RAEN Digital Tools" width="200">
 </p>
