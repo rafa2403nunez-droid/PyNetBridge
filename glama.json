@@ -9,7 +9,8 @@
 
   "runtime": "python",
 
-  "install": "pip install .",
+  "build": ["pip install ."],
+  "command": ["pynet-bridge"],
 
   "mcpServers": {
     "pynet-bridge": {
