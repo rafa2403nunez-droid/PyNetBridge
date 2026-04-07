@@ -23,37 +23,68 @@ This bridge acts as the connective tissue between AI logic and Autodesk desktop 
 
 ## 🛠️ Installation
 
-### 1. Prerequisites
+### ✅ Option A — Automatic installer (recommended)
+
+Open PowerShell and run:
+
+```powershell
+irm https://raw.githubusercontent.com/rafa2403nunez-droid/PyNetBridge/main/install.ps1 | iex
+```
+
+This will automatically:
+1. Install `pynet-mcp-bridge` from PyPI
+2. Configure **Claude Desktop** (supports both standard and Microsoft Store versions)
+3. Configure **Claude Code** (VS Code extension)
+
+> Restart Claude Desktop and/or VS Code after installation.
+
+### Prerequisites
 * **PyNet Platform** plugin installed in Navisworks/Revit.
-* Python 3.10 or higher.
-
-### 2. Install the Bridge
-Run the following command in your terminal:
-
-pip install .
-
-This will register the **pynet-bridge** command globally in your system.
+* Python 3.10 or higher → [python.org](https://www.python.org/downloads/)
 
 ---
 
-## ⚙️ Configuration for Claude Desktop
+### 🔧 Option B — Manual installation
 
-To allow Claude to control your BIM environment, add the server to your Claude Desktop configuration file.
+**1. Install the package:**
 
-**File Path:** %APPDATA%\Claude\claude_desktop_config.json
+```bash
+pip install pynet-mcp-bridge
+```
 
-**Configuration JSON:**
+**2. Configure Claude Desktop:**
+
+Add the following to your `claude_desktop_config.json`:
+- Standard: `%APPDATA%\Claude\claude_desktop_config.json`
+- Microsoft Store: `%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
-    "pynet-platform": {
+    "pynet-bridge": {
       "command": "pynet-bridge",
       "args": []
     }
   }
 }
 ```
+
+**3. Configure Claude Code (VS Code extension):**
+
+Add to `%USERPROFILE%\.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "pynet-bridge": {
+      "type": "stdio",
+      "command": "pynet-bridge",
+      "args": []
+    }
+  }
+}
+```
+
 ---
 
 ## 🛠️ Available MCP Tools
@@ -94,8 +125,8 @@ Once connected, the AI will have access to the full suite of PyNet tools:
 This project is licensed under the MIT License.
 
 ---
-Built with ❤️ for the BIM Community by [rafa2403nunez](https://github.com/rafa2403nunez-droid)
-
 <p align="center">
+  Built with ❤️ for the BIM Community by <a href="https://github.com/rafa2403nunez-droid">rafa2403nunez</a>
+  <br/><br/>
   <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/RAENDigitalTools.png" alt="RAEN Digital Tools" width="200">
 </p>
