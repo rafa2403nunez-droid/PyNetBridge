@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/PyNetBridge.png" width="150"/>
+  <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/PyNetBridge.png" width="300"/>
 </p>
 
 
