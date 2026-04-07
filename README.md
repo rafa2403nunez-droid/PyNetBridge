@@ -126,7 +126,7 @@ This project is licensed under the MIT License.
 
 ---
 <p align="center">
-  Built with ❤️ for the BIM Community by <a href="https://github.com/rafa2403nunez-droid">rafa2403nunez</a>
+  Developed by <b>RAEN Digital Tools</b>
   <br/><br/>
   <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/RAENDigitalTools.png" alt="RAEN Digital Tools" width="200">
 </p>
