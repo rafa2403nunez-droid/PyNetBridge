@@ -7,10 +7,16 @@
   "homepage": "https://github.com/rafa2403nunez-droid/PyNetBridge",
   "license": "MIT",
 
-  "type": "python",
+  "runtime": "python",
 
-  "entrypoint": "pynet_mcp.server",
-  "start": "python -m pynet_mcp.server",
+  "install": "pip install .",
+
+  "mcpServers": {
+    "pynet-bridge": {
+      "command": "pynet-bridge",
+      "args": []
+    }
+  },
 
   "keywords": [
     "BIM",
