@@ -7,13 +7,10 @@
   "homepage": "https://github.com/rafa2403nunez-droid/PyNetBridge",
   "license": "MIT",
 
-  "type": "python",
   "runtime": "python",
 
-  "entrypoint": "pynet_mcp.server:main",
-
-  "build": ["pip install ."],
-  "command": ["pynet-bridge"],
+  "build": ["uv venv /opt/venv --python /usr/local/bin/python && uv pip install --python /opt/venv/bin/python ."],
+  "command": ["/opt/venv/bin/pynet-bridge"],
 
   "mcpServers": {
     "pynet-bridge": {
