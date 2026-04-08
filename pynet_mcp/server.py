@@ -1,16 +1,127 @@
 import json
 import psutil
+import ast
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("PyNet Platform Bridge")
+
 PIPE_PREFIX = r'\\.\pipe\tool_runner_'
 TARGET_PROCESS = "roamer.exe"
 
+ALLOWED_REFERENCES = {
+    "Autodesk.Navisworks.Api",
+    "Autodesk.Navisworks.ComApi",
+    "Autodesk.Navisworks.Interop.ComApi",
+    "Autodesk.Navisworks.Clash",
+    "System",
+    "System.Windows.Forms",
+    "System.Drawing",
+    "System.Collections.Generic",
+    "Raen.Navisworks.Pynet.2024",
+}
+
+ALLOWED_PYTHON_IMPORTS = {
+    "clr", "sys", "json", "re", "time", "datetime", "pathlib",
+    "typing", "threading", "collections", "xml",
+    "pandas", "plotly", "matplotlib", "dash", "webbrowser",
+    "psutil",
+}
+
+BLOCKED_PYTHON_IMPORTS = {
+    "os", "subprocess", "shutil", "socket", "ctypes", "pickle",
+    "importlib", "http", "urllib", "signal", "multiprocessing",
+    "tempfile", "glob", "inspect", "code", "codeop",
+}
+
+BLOCKED_CALLS = {
+    "eval", "exec", "compile", "__import__",
+    "getattr", "setattr", "delattr", "globals", "locals", "vars",
+    "breakpoint", "open",
+}
+
+
+class ScriptAnalyzer(ast.NodeVisitor):
+    def __init__(self):
+        self.clr_references = []
+        self.python_imports = []
+        self.calls = []
+        self.dangerous_attrs = []
+
+    def visit_Import(self, node):
+        for alias in node.names:
+            root = alias.name.split(".")[0]
+            self.python_imports.append(root)
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node):
+        if node.module:
+            root = node.module.split(".")[0]
+            self.python_imports.append(root)
+        self.generic_visit(node)
+
+    def visit_Call(self, node):
+        if isinstance(node.func, ast.Attribute):
+            if node.func.attr == "AddReference":
+                if isinstance(node.func.value, ast.Name) and node.func.value.id == "clr":
+                    if node.args and isinstance(node.args[0], ast.Constant):
+                        self.clr_references.append(node.args[0].value)
+            self.calls.append(node.func.attr)
+        elif isinstance(node.func, ast.Name):
+            self.calls.append(node.func.id)
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node):
+        if node.attr in ("__builtins__", "__subclasses__", "__globals__", "__code__"):
+            self.dangerous_attrs.append(node.attr)
+        self.generic_visit(node)
+
+def check_references(refs):
+    for ref in refs:
+        if ref not in ALLOWED_REFERENCES:
+            return False, f"Non-whitelisted assembly: {ref}"
+    return True, None
+
+def check_imports(imports):
+    for imp in imports:
+        if imp in BLOCKED_PYTHON_IMPORTS:
+            return False, f"Blocked import: {imp}"
+        if imp not in ALLOWED_PYTHON_IMPORTS:
+            return False, f"Non-whitelisted import: {imp}"
+    return True, None
+
+def check_calls(calls):
+    for call in calls:
+        if call in BLOCKED_CALLS:
+            return False, f"Forbidden call: {call}"
+    return True, None
+
+def validate_script(script: str):
+    try:
+        tree = ast.parse(script)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+
+    analyzer = ScriptAnalyzer()
+    analyzer.visit(tree)
+
+    ok, msg = check_references(analyzer.clr_references)
+    if not ok:
+        return False, msg
+
+    ok, msg = check_imports(analyzer.python_imports)
+    if not ok:
+        return False, msg
+
+    ok, msg = check_calls(analyzer.calls)
+    if not ok:
+        return False, msg
+
+    if analyzer.dangerous_attrs:
+        return False, f"Dangerous attribute access: {analyzer.dangerous_attrs[0]}"
+
+    return True, "OK"
+
 def send_to_pipe(pid: int, payload: dict) -> str:
-    """
-    Universal dispatcher optimized for PyNet Platform classes.
-    Matches the C# mcpActions enum names.
-    """
     pipe_path = f"{PIPE_PREFIX}{pid}"
     try:
         with open(pipe_path, 'r+b') as pipe:
@@ -22,7 +133,7 @@ def send_to_pipe(pid: int, payload: dict) -> str:
             if response:
                 return response.decode('utf-8').strip()
             return f"Success: Action {payload['Action']} executed on PID {pid}."
-            
+
     except FileNotFoundError:
         return f"Error: PyNet Instance (PID {pid}) not found."
     except Exception as e:
@@ -30,7 +141,6 @@ def send_to_pipe(pid: int, payload: dict) -> str:
 
 @mcp.tool()
 def list_active_instances() -> str:
-    """Retrieves PIDs for all Navisworks instances with an active PyNet listener."""
     pids = []
     for proc in psutil.process_iter(['pid', 'name']):
         try:
@@ -44,11 +154,11 @@ def list_active_instances() -> str:
                     continue
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
+
     return f"Active PIDs: {', '.join(map(str, pids))}" if pids else "No active instances found."
 
 @mcp.tool()
 def check_plugin_status(pid: int) -> str:
-    """Handshake ping to verify the plugin listener is responsive."""
     payload = {
         "Action": "Ping",
         "Metadata": {"TargetPid": pid},
@@ -58,7 +168,11 @@ def check_plugin_status(pid: int) -> str:
 
 @mcp.tool()
 def send_command(pid: int, script_name: str, content: str) -> str:
-    """Direct script execution in the PyNet engine."""
+    valid, message = validate_script(content)
+
+    if not valid:
+        return f"Script rejected: {message}"
+
     payload = {
         "Action": "Execute",
         "Metadata": {
@@ -67,12 +181,11 @@ def send_command(pid: int, script_name: str, content: str) -> str:
         },
         "Content": content
     }
-    return send_to_pipe(pid, payload)
 
+    return send_to_pipe(pid, payload)
 
 @mcp.tool()
 def get_pynet_ui_layout(pid: int) -> str:
-    """Fetches the full UI structure (ButtonsModules and ScriptButtons)."""
     payload = {
         "Action": "GetButtonsModules",
         "Metadata": {"TargetPid": pid},
@@ -81,133 +194,23 @@ def get_pynet_ui_layout(pid: int) -> str:
     return send_to_pipe(pid, payload)
 
 @mcp.tool()
-def get_buttons_data(pid: int, module_id: str) -> str:
-    """Lists all script buttons for a specific module ID."""
-    payload = {
-        "Action": "GetButtonsData",
-        "Metadata": {
-            "TargetPid": pid,
-            "ModuleId": module_id
-        },
-        "Content": ""
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
-def get_output_window_status(pid: int) -> str:
-    """Get if the output window is available or not."""
-    payload = {
-        "Action": "GetOutputWindowStatus",
-        "Metadata": {
-            "TargetPid": pid,
-        },
-        "Content": ""
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
 def create_pynet_module(pid: int, name: str) -> str:
-    """Creates a new ButtonsModule."""
     payload = {
         "Action": "CreateModule",
         "Metadata": {"TargetPid": pid},
-        "Content": name 
+        "Content": name
     }
     return send_to_pipe(pid, payload)
 
 @mcp.tool()
 def delete_pynet_module(pid: int, module_id: str) -> str:
-    """Permanently deletes a module."""
     payload = {
-        "Action": "DeleteModule", # Matches mcpActions.DeleteModule
+        "Action": "DeleteModule",
         "Metadata": {
             "TargetPid": pid,
             "ModuleId": module_id
         },
         "Content": ""
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
-def deploy_script_button(
-    pid: int, 
-    module_id: str, 
-    name: str, 
-    script_Path: str, 
-    icon_name: str = "Default", 
-    tooltip: str = ""
-) -> str:
-    """Installs a ScriptButton into a specific ButtonsModule."""
-    button_data = {
-        "Name": name,
-        "ScriptPath": script_Path,
-        "IconName": icon_name,
-        "Tooltip": tooltip
-    }
-    
-    payload = {
-        "Action": "CreateButtonData",
-        "Metadata": {
-            "TargetPid": pid,
-            "ModuleId": module_id
-        },
-        "Content": json.dumps(button_data)
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
-def update_script_button(
-    pid: int,
-    module_id: str,
-    button_id: str,
-    name: str,
-    script_Path: str,
-    icon_name: str,
-    tooltip: str,
-    dest_module_id: str = None
-) -> str:
-    """Updates metadata for an existing ScriptButton."""
-    button_data = {
-        "Id": button_id,
-        "Name": name,
-        "ScriptPath": script_Path,
-        "IconName": icon_name,
-        "Tooltip": tooltip
-    }
-
-    payload = {
-        "Action": "UpdateButtonData",
-        "Metadata": {
-            "TargetPid": pid,
-            "ModuleId": module_id,
-            "ButtonId": button_id,
-            "DestModuleId": dest_module_id if dest_module_id else module_id
-        },
-        "Content": json.dumps(button_data)
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
-def delete_script_button(pid: int, module_id: str, button_id: str) -> str:
-    """Permanently removes a ScriptButton from a module by Id."""
-    payload = {
-        "Action": "DeleteButtonData",
-        "Metadata": {
-            "TargetPid": pid,
-            "ModuleId": module_id,
-            "ButtonId": button_id
-        },
-        "Content": ""
-    }
-    return send_to_pipe(pid, payload)
-
-@mcp.tool()
-def configure_output_window(pid: int, is_available: bool) -> str:
-    """Toggles the visibility of the PyNet log/output window."""
-    payload = {
-        "Action": "ConfigureOutputWindow",
-        "Metadata": {"TargetPid": pid},
-        "Content": str(is_available).lower()
     }
     return send_to_pipe(pid, payload)
 

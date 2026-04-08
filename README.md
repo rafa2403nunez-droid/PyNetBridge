@@ -113,6 +113,32 @@ Once connected, the AI will have access to the full suite of PyNet tools:
 
 ---
 
+## 🛡️ Script Quality Control
+
+Starting from **v1.1.0**, the MCP server includes a built-in static analyzer that validates every script before it reaches Navisworks. All scripts are parsed and inspected at the bridge level — **rejected scripts never leave the MCP server**.
+
+### Allowed CLR Assemblies
+Only these .NET references are permitted via `clr.AddReference`:
+- `Autodesk.Navisworks.Api`, `.ComApi`, `.Interop.ComApi`, `.Clash`
+- `System`, `System.Windows.Forms`, `System.Drawing`, `System.Collections.Generic`
+- `Raen.Navisworks.Pynet.2024`
+
+### Allowed Python Imports
+`clr`, `sys`, `json`, `re`, `time`, `datetime`, `pathlib`, `typing`, `threading`, `collections`, `xml`, `pandas`, `plotly`, `matplotlib`, `dash`, `webbrowser`, `psutil`
+
+### Blocked Python Imports
+`os`, `subprocess`, `shutil`, `socket`, `ctypes`, `pickle`, `importlib`, `http`, `urllib`, `signal`, `multiprocessing`, `tempfile`, `glob`, `inspect`, `code`, `codeop`
+
+### Blocked Calls
+`eval`, `exec`, `compile`, `__import__`, `getattr`, `setattr`, `delattr`, `globals`, `locals`, `vars`, `breakpoint`, `open`
+
+### Blocked Attribute Access
+`__builtins__`, `__subclasses__`, `__globals__`, `__code__`
+
+> Any script that violates these rules is immediately rejected with a descriptive error message, without ever being sent to the plugin.
+
+---
+
 ## 📂 Project Structure
 
 * **pynet_mcp/**: Core MCP server logic (FastMCP).
