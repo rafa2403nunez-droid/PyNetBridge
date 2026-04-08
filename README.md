@@ -5,19 +5,33 @@
 
 # 🐍 PyNet Platform Bridge (MCP)
 
-**PyNet Platform Bridge** is a Model Context Protocol (MCP) server that enables AI models (such as Claude, GPT-4o, or Gemini) to interact directly with **Autodesk Tools** through the PyNet Platform.
+**PyNet Platform Bridge (MCP)** is the execution layer that allows AI models to control Autodesk tools in real-time.
+
+It connects Natural Language → Python → Navisworks (Revit & Civil 3D coming soon), enabling AI to generate, execute, and refine BIM workflows autonomously.
+
+Available Integration includes **Navisworks Manage**. Revit and Civil 3D **coming soon**.
 
 This bridge acts as the connective tissue between AI logic and Autodesk desktop APIs, allowing for dynamic UI creation, script execution, and BIM process automation using natural language.
 
+## 🔄 How it works
+
+1. The user describes a task in natural language.  
+2. The AI generates a Python script.
+3. PyNet Bridge validates and sends the script.
+4. The PyNet plugin executes it inside Autodesk.
+5. Results are returned back to the AI.
+
+This is what turns AI from a chatbot into an execution engine for BIM.
+
 ---
 
-## 🚀 Key Features
+## 🚀 What makes PyNet Bridge powerful
 
-* **Dynamic UI Deployment:** Allows the AI to create custom Ribbon tabs (modules) and buttons in Navisworks/Revit in real-time.
-* **Script Execution:** Seamlessly send and execute Python code directly within the PyNet Platform's internal engine.
-* **Instance Detection:** Automatically locates active Navisworks/Revit processes using PID tracking via psutil.
-* **Robust Communication:** Built on Named Pipes for low-latency, high-reliability IPC (Inter-Process Communication).
-* **Open Ecosystem:** Compatible with any MCP client (Claude Desktop, Cursor, VS Code, Zed, etc.).
+* **AI → Action:** Turns AI-generated code into real actions inside Navisworks/Revit  
+* **Real-time Execution:** Run scripts instantly without leaving the BIM environment  
+* **Dynamic UI Creation:** Let AI create tools, buttons and workflows on the fly  
+* **Reliable Communication:** Fast and stable IPC using Named Pipes  
+* **Model-Aware Automation:** Operates directly on live BIM models  
 
 ---
 
@@ -89,7 +103,10 @@ Add to `%USERPROFILE%\.claude.json`:
 
 ## 🛠️ Available MCP Tools
 
+These tools allow AI to fully control the PyNet environment, from UI creation to script execution and system monitoring.
 Once connected, the AI will have access to the full suite of PyNet tools:
+
+### 🧠 Core capabilities exposed to AI
 
 ### 🔍 System & Connection
 * **list_active_instances**: Scans the system for running Navisworks processes (`roamer.exe`) with an active PyNet IPC pipe.
@@ -113,9 +130,17 @@ Once connected, the AI will have access to the full suite of PyNet tools:
 
 ---
 
-## 🛡️ Script Quality Control
+## 🛡️ Safe AI Execution
 
-Starting from **v1.1.0**, the MCP server includes a built-in static analyzer that validates every script before it reaches Navisworks. All scripts are parsed and inspected at the bridge level — **rejected scripts never leave the MCP server**.
+PyNet Bridge includes a built-in validation layer that ensures all AI-generated scripts are safe and controlled before execution.
+
+✔ Prevents unsafe operations  
+✔ Blocks unauthorized system access  
+✔ Guarantees controlled interaction with BIM models  
+
+**AI remains powerful**, but within safe boundaries
+
+Starting from **v1.1.1**, the MCP server includes a built-in static analyzer that validates every script before it reaches Navisworks. All scripts are parsed and inspected at the bridge level — **rejected scripts never leave the MCP server**.
 
 ### Allowed CLR Assemblies
 Only these .NET references are permitted via `clr.AddReference`:
@@ -143,6 +168,14 @@ Only these .NET references are permitted via `clr.AddReference`:
 
 * **pynet_mcp/**: Core MCP server logic (FastMCP).
 * **pyproject.toml**: Package configuration and dependency management.
+
+---
+
+## 📥 Getting Started
+
+Start building autonomous BIM workflows in minutes.
+
+Install the bridge, connect your AI client, and turn natural language into real actions inside your models.
 
 ---
 
