@@ -179,6 +179,26 @@ Install the bridge, connect your AI client, and turn natural language into real 
 
 ---
 
+## 🔗 How This MCP Fits Into the Ecosystem
+
+This MCP is part of a modular system designed to enable AI-driven BIM automation across Autodesk tools.
+
+This repository is designed to work alongside:
+
+- PyNet Platform → Executes scripts inside Navisworks via Python.NET  
+- PyNet Library → Gives the IA context with a Python scripts library 
+
+Together, these components enable:
+
+Natural Language → AI → Python Script → PyNet → Navisworks → BIM Action
+
+| Component | Repository | Purpose |
+| :--- | :--- | :--- |
+| **PyNet Platform** | [rafa2403nunez-droid/PyNet](https://github.com/rafa2403nunez-droid/PyNet) | Navisworks/Revit plugin — hosts the Python.NET engine |
+| **PyNet Bridge (MCP)** | This repo | MCP server - connects AI models to PyNET with including secure scripts validation|
+| **PyNet Library** | [rafa2403nunez-droid/PyNetLibrary](https://github.com/rafa2403nunez-droid/PyNetLibrary) | Script reference library and AI context |
+
+
 ## 📄 License
 
 This project is licensed under the MIT License.
