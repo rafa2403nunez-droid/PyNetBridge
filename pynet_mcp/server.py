@@ -40,6 +40,8 @@ BLOCKED_CALLS = {
     "breakpoint", "open",
 }
 
+ALLOWED_CLR_ROOTS = {ref.split(".")[0] for ref in ALLOWED_REFERENCES}
+
 
 class ScriptAnalyzer(ast.NodeVisitor):
     def __init__(self):
@@ -86,7 +88,7 @@ def check_imports(imports):
     for imp in imports:
         if imp in BLOCKED_PYTHON_IMPORTS:
             return False, f"Blocked import: {imp}"
-        if imp not in ALLOWED_PYTHON_IMPORTS:
+        if imp not in ALLOWED_PYTHON_IMPORTS and imp not in ALLOWED_CLR_ROOTS:
             return False, f"Non-whitelisted import: {imp}"
     return True, None
 
