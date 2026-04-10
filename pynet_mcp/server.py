@@ -37,7 +37,7 @@ BLOCKED_PYTHON_IMPORTS = {
 BLOCKED_CALLS = {
     "eval", "exec", "compile", "__import__",
     "getattr", "setattr", "delattr", "globals", "locals", "vars",
-    "breakpoint", "open",
+    "breakpoint",
 }
 
 ALLOWED_CLR_ROOTS = {ref.split(".")[0] for ref in ALLOWED_REFERENCES}
