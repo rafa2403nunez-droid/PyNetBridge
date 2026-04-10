@@ -127,34 +127,31 @@ def send_to_pipe(pid: int, payload: dict, timeout: float = 10.0) -> str:
     result = [None]
     error = [None]
 
-    def _read(pipe):
+    def _open_and_communicate():
         try:
-            response = pipe.readline()
-            if response:
-                result[0] = response.decode('utf-8').strip()
-        except Exception as e:
-            error[0] = e
-
-    try:
-        with open(pipe_path, 'r+b') as pipe:
+            pipe = open(pipe_path, 'r+b')
             message = json.dumps(payload).encode('utf-8') + b'\n'
             pipe.write(message)
             pipe.flush()
+            response = pipe.readline()
+            if response:
+                result[0] = response.decode('utf-8').strip()
+        except FileNotFoundError:
+            error[0] = FileNotFoundError(f"PyNet Instance (PID {pid}) not found.")
+        except Exception as e:
+            error[0] = e
 
-            reader = threading.Thread(target=_read, args=(pipe,), daemon=True)
-            reader.start()
-            reader.join(timeout=timeout)
+    worker = threading.Thread(target=_open_and_communicate, daemon=True)
+    worker.start()
+    worker.join(timeout=timeout)
 
-            if reader.is_alive():
-                return f"Timeout: No response from PID {pid} after {timeout}s."
-            if error[0]:
-                return f"IPC Error: {str(error[0])}"
-            return result[0] or f"Success: Action {payload['Action']} executed on PID {pid}."
-
-    except FileNotFoundError:
-        return f"Error: PyNet Instance (PID {pid}) not found."
-    except Exception as e:
-        return f"IPC Error: {str(e)}"
+    if worker.is_alive():
+        return f"Timeout: No response from PID {pid} after {timeout}s."
+    if error[0]:
+        if isinstance(error[0], FileNotFoundError):
+            return f"Error: {error[0]}"
+        return f"IPC Error: {str(error[0])}"
+    return result[0] or f"Success: Action {payload['Action']} executed on PID {pid}."
 
 @mcp.tool()
 def list_active_instances() -> str:
@@ -184,7 +181,7 @@ def check_plugin_status(pid: int) -> str:
     return send_to_pipe(pid, payload, timeout=5.0)
 
 @mcp.tool()
-def send_command(pid: int, script_name: str, content: str, timeout: float = 60.0) -> str:
+def send_command(pid: int, script_name: str, content: str, timeout: float) -> str:
     valid, message = validate_script(content)
 
     if not valid:
