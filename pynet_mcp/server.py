@@ -1,6 +1,7 @@
 import json
 import psutil
 import ast
+import threading
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("PyNet Platform Bridge")
@@ -121,18 +122,34 @@ def validate_script(script: str):
 
     return True, "OK"
 
-def send_to_pipe(pid: int, payload: dict) -> str:
+def send_to_pipe(pid: int, payload: dict, timeout: float = 10.0) -> str:
     pipe_path = f"{PIPE_PREFIX}{pid}"
+    result = [None]
+    error = [None]
+
+    def _read(pipe):
+        try:
+            response = pipe.readline()
+            if response:
+                result[0] = response.decode('utf-8').strip()
+        except Exception as e:
+            error[0] = e
+
     try:
         with open(pipe_path, 'r+b') as pipe:
             message = json.dumps(payload).encode('utf-8') + b'\n'
             pipe.write(message)
             pipe.flush()
 
-            response = pipe.readline()
-            if response:
-                return response.decode('utf-8').strip()
-            return f"Success: Action {payload['Action']} executed on PID {pid}."
+            reader = threading.Thread(target=_read, args=(pipe,), daemon=True)
+            reader.start()
+            reader.join(timeout=timeout)
+
+            if reader.is_alive():
+                return f"Timeout: No response from PID {pid} after {timeout}s."
+            if error[0]:
+                return f"IPC Error: {str(error[0])}"
+            return result[0] or f"Success: Action {payload['Action']} executed on PID {pid}."
 
     except FileNotFoundError:
         return f"Error: PyNet Instance (PID {pid}) not found."
@@ -164,10 +181,10 @@ def check_plugin_status(pid: int) -> str:
         "Metadata": {"TargetPid": pid},
         "Content": ""
     }
-    return send_to_pipe(pid, payload)
+    return send_to_pipe(pid, payload, timeout=5.0)
 
 @mcp.tool()
-def send_command(pid: int, script_name: str, content: str) -> str:
+def send_command(pid: int, script_name: str, content: str, timeout: float = 60.0) -> str:
     valid, message = validate_script(content)
 
     if not valid:
@@ -182,7 +199,7 @@ def send_command(pid: int, script_name: str, content: str) -> str:
         "Content": content
     }
 
-    return send_to_pipe(pid, payload)
+    return send_to_pipe(pid, payload, timeout=timeout)
 
 @mcp.tool()
 def get_pynet_ui_layout(pid: int) -> str:
@@ -191,7 +208,7 @@ def get_pynet_ui_layout(pid: int) -> str:
         "Metadata": {"TargetPid": pid},
         "Content": ""
     }
-    return send_to_pipe(pid, payload)
+    return send_to_pipe(pid, payload, timeout=10.0)
 
 @mcp.tool()
 def create_pynet_module(pid: int, name: str) -> str:
@@ -200,7 +217,7 @@ def create_pynet_module(pid: int, name: str) -> str:
         "Metadata": {"TargetPid": pid},
         "Content": name
     }
-    return send_to_pipe(pid, payload)
+    return send_to_pipe(pid, payload, timeout=10.0)
 
 @mcp.tool()
 def delete_pynet_module(pid: int, module_id: str) -> str:
@@ -212,7 +229,7 @@ def delete_pynet_module(pid: int, module_id: str) -> str:
         },
         "Content": ""
     }
-    return send_to_pipe(pid, payload)
+    return send_to_pipe(pid, payload, timeout=10.0)
 
 def main():
     mcp.run()
