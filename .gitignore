@@ -419,3 +419,7 @@ FodyWeavers.xsd
 
 # Claude Code
 .claude/
+
+# Python build artifacts
+dist/
+*.egg-info/
