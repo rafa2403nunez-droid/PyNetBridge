@@ -1,25 +1,48 @@
+import asyncio
 import json
 import psutil
 import ast
 import threading
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
 
 mcp = FastMCP("PyNet Platform Bridge")
 
 PIPE_PREFIX = r'\\.\pipe\tool_runner_'
-TARGET_PROCESS = "roamer.exe"
+
+SUPPORTED_PRODUCTS = {
+    "roamer.exe":  "Navisworks",
+    "revit.exe":   "Revit",
+    "acad.exe":    "AutoCAD",
+}
 
 ALLOWED_REFERENCES = {
-    "Autodesk.Navisworks.Api",
-    "Autodesk.Navisworks.ComApi",
-    "Autodesk.Navisworks.Interop.ComApi",
-    "Autodesk.Navisworks.Clash",
+    # Common .NET
     "System",
     "System.Windows.Forms",
     "System.Drawing",
     "System.Collections.Generic",
-    "Raen.Navisworks.Pynet.2024",
+    # Navisworks
+    "Autodesk.Navisworks.Api",
+    "Autodesk.Navisworks.ComApi",
+    "Autodesk.Navisworks.Interop.ComApi",
+    "Autodesk.Navisworks.Clash",
+    # Revit
+    "RevitAPI",
+    "RevitAPIUI",
+    # AutoCAD / Civil 3D
+    "AcMgd",
+    "AcCoreMgd",
+    "AcDbMgd",
+    "AecBaseMgd",
+    "AecPropDataMgd",
+    "AeccDbMgd",
 }
+
+ALLOWED_REFERENCE_PREFIXES = (
+    "Raen.Navisworks.Pynet.",
+    "Raen.Revit.Pynet.",
+    "Raen.Civil3D.Pynet.",
+)
 
 ALLOWED_PYTHON_IMPORTS = {
     "clr", "sys", "json", "re", "time", "datetime", "pathlib",
@@ -80,8 +103,11 @@ class ScriptAnalyzer(ast.NodeVisitor):
 
 def check_references(refs):
     for ref in refs:
-        if ref not in ALLOWED_REFERENCES:
-            return False, f"Non-whitelisted assembly: {ref}"
+        if ref in ALLOWED_REFERENCES:
+            continue
+        if ref.startswith(ALLOWED_REFERENCE_PREFIXES):
+            continue
+        return False, f"Non-whitelisted assembly: {ref}"
     return True, None
 
 def check_imports(imports):
@@ -155,23 +181,80 @@ def send_to_pipe(pid: int, payload: dict, timeout: float = 10.0) -> str:
         return f"IPC Error: {str(error[0])}"
     return result[0] or f"Success: Action {payload['Action']} executed on PID {pid}."
 
+
+async def _send_with_heartbeat(pid: int, payload: dict, timeout: float, ctx: Context) -> str:
+    pipe_path = f"{PIPE_PREFIX}{pid}"
+    loop = asyncio.get_event_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def _communicate():
+        try:
+            pipe = open(pipe_path, 'r+b')
+            pipe.write(json.dumps(payload).encode('utf-8') + b'\n')
+            pipe.flush()
+            while True:
+                raw = pipe.readline()
+                if not raw:
+                    loop.call_soon_threadsafe(queue.put_nowait, (None, None))
+                    break
+                text = raw.decode('utf-8').strip()
+                if not text:
+                    continue
+                try:
+                    parsed = json.loads(text)
+                except Exception:
+                    parsed = {}
+                loop.call_soon_threadsafe(queue.put_nowait, (text, parsed))
+                if parsed.get("type") != "heartbeat":
+                    break
+        except FileNotFoundError:
+            loop.call_soon_threadsafe(
+                queue.put_nowait, (f"Error: PyNet Instance (PID {pid}) not found.", None)
+            )
+        except Exception as e:
+            loop.call_soon_threadsafe(queue.put_nowait, (f"IPC Error: {e}", None))
+
+    threading.Thread(target=_communicate, daemon=True).start()
+
+    deadline = loop.time() + timeout
+    while True:
+        remaining = deadline - loop.time()
+        if remaining <= 0:
+            return f"Timeout: No response from PID {pid} after {timeout}s."
+        try:
+            text, parsed = await asyncio.wait_for(queue.get(), timeout=remaining)
+        except asyncio.TimeoutError:
+            return f"Timeout: No response from PID {pid} after {timeout}s."
+
+        if text is None:
+            return f"Error: Connection closed unexpectedly by PID {pid}."
+        if parsed is None or parsed.get("type") != "heartbeat":
+            return text
+
+        beat = parsed.get("beat", "?")
+        elapsed = parsed.get("elapsed", "?")
+        await ctx.report_progress(beat, None, f"Executing script... {elapsed} elapsed")
+
 @mcp.tool()
 def list_active_instances() -> str:
-    pids = []
+    instances = []
     for proc in psutil.process_iter(['pid', 'name']):
         try:
-            if proc.info['name'].lower() == TARGET_PROCESS:
-                pid = proc.info['pid']
-                pipe_path = f"\\\\.\\pipe\\tool_runner_{pid}"
-                try:
-                    with open(pipe_path, 'r+b'):
-                        pids.append(pid)
-                except OSError:
-                    continue
+            name = proc.info['name'].lower()
+            product = SUPPORTED_PRODUCTS.get(name)
+            if not product:
+                continue
+            pid = proc.info['pid']
+            pipe_path = f"\\\\.\\pipe\\tool_runner_{pid}"
+            try:
+                with open(pipe_path, 'r+b'):
+                    instances.append(f"{product} (PID {pid})")
+            except OSError:
+                continue
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
-    return f"Active PIDs: {', '.join(map(str, pids))}" if pids else "No active instances found."
+    return f"Active instances: {', '.join(instances)}" if instances else "No active instances found."
 
 @mcp.tool()
 def check_plugin_status(pid: int) -> str:
@@ -183,7 +266,7 @@ def check_plugin_status(pid: int) -> str:
     return send_to_pipe(pid, payload, timeout=5.0)
 
 @mcp.tool()
-def send_command(pid: int, script_name: str, content: str, timeout: float) -> str:
+async def send_command(pid: int, script_name: str, content: str, timeout: float, ctx: Context) -> str:
     valid, message = validate_script(content)
 
     if not valid:
@@ -198,7 +281,7 @@ def send_command(pid: int, script_name: str, content: str, timeout: float) -> st
         "Content": content
     }
 
-    return send_to_pipe(pid, payload, timeout=timeout)
+    return await _send_with_heartbeat(pid, payload, timeout, ctx)
 
 @mcp.tool()
 def get_pynet_ui_layout(pid: int) -> str:

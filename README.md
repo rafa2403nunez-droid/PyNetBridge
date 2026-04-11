@@ -7,9 +7,9 @@
 
 **PyNet Platform Bridge (MCP)** is the execution layer that allows AI models to control Autodesk tools in real-time.
 
-It connects Natural Language → Python → Navisworks (Revit & Civil 3D coming soon), enabling AI to generate, execute, and refine BIM workflows autonomously.
+It connects Natural Language → Python → Autodesk desktop tools (Navisworks, Revit, AutoCAD), enabling AI to generate, execute, and refine BIM workflows autonomously.
 
-Available Integration includes **Navisworks Manage**. Revit and Civil 3D **coming soon**.
+Available integrations include **Navisworks Manage**, **Revit**, and **AutoCAD**.
 
 This bridge acts as the connective tissue between AI logic and Autodesk desktop APIs, allowing for dynamic UI creation, script execution, and BIM process automation using natural language.
 
@@ -55,12 +55,19 @@ This will automatically:
 ### Prerequisites
 * **PyNet Platform** plugin installed in Navisworks/Revit.
 * Python 3.10 or higher → [python.org](https://www.python.org/downloads/)
+* (Recommended) **uv** → [docs.astral.sh/uv](https://docs.astral.sh/uv/)
 
 ---
 
 ### 🔧 Option B — Manual installation
 
 **1. Install the package:**
+
+```bash
+uv tool install pynet-mcp-bridge
+```
+
+Or with pip:
 
 ```bash
 pip install pynet-mcp-bridge
@@ -109,7 +116,7 @@ Once connected, the AI will have access to the full suite of PyNet tools:
 ### 🧠 Core capabilities exposed to AI
 
 ### 🔍 System & Connection
-* **list_active_instances**: Scans the system for running Navisworks processes (`roamer.exe`) with an active PyNet IPC pipe.
+* **list_active_instances**: Scans the system for running Autodesk processes (`roamer.exe`, `revit.exe`, `acad.exe`) with an active PyNet IPC pipe.
 * **check_plugin_status**: Handshake ping to verify the plugin listener is responsive.
 
 ### 🏗️ Module (Tab) Management
@@ -140,13 +147,15 @@ PyNet Bridge includes a built-in validation layer that ensures all AI-generated 
 
 **AI remains powerful**, but within safe boundaries
 
-Starting from **v1.1.1**, the MCP server includes a built-in static analyzer that validates every script before it reaches Navisworks. All scripts are parsed and inspected at the bridge level — **rejected scripts never leave the MCP server**.
+Starting from **v1.1.1**, the MCP server includes a built-in static analyzer that validates every script before it reaches the Autodesk host. All scripts are parsed and inspected at the bridge level — **rejected scripts never leave the MCP server**.
 
 ### Allowed CLR Assemblies
 Only these .NET references are permitted via `clr.AddReference`:
-- `Autodesk.Navisworks.Api`, `.ComApi`, `.Interop.ComApi`, `.Clash`
-- `System`, `System.Windows.Forms`, `System.Drawing`, `System.Collections.Generic`
-- `Raen.Navisworks.Pynet.2024`
+- **Common:** `System`, `System.Windows.Forms`, `System.Drawing`, `System.Collections.Generic`
+- **Navisworks:** `Autodesk.Navisworks.Api`, `.ComApi`, `.Interop.ComApi`, `.Clash`
+- **Revit:** `RevitAPI`, `RevitAPIUI`
+- **AutoCAD / Civil 3D:** `AcMgd`, `AcCoreMgd`, `AcDbMgd`, `AecBaseMgd`, `AecPropDataMgd`, `AeccDbMgd`
+- **PyNet plugins:** `Raen.{Product}.Pynet.*` (any version — e.g. `Raen.Navisworks.Pynet.2024`, `Raen.Civil3D.Pynet.2026`)
 
 ### Allowed Python Imports
 `clr`, `sys`, `json`, `re`, `time`, `datetime`, `pathlib`, `typing`, `threading`, `collections`, `xml`, `pandas`, `plotly`, `matplotlib`, `dash`, `webbrowser`, `psutil`
@@ -185,16 +194,16 @@ This MCP is part of a modular system designed to enable AI-driven BIM automation
 
 This repository is designed to work alongside:
 
-- PyNet Platform → Executes scripts inside Navisworks via Python.NET  
-- PyNet Library → Gives the IA context with a Python scripts library 
+- PyNet Platform → Executes scripts inside Navisworks, Revit & Civil 3D via Python.NET  
+- PyNet Library → Gives the AI context with a Python scripts library 
 
 Together, these components enable:
 
-Natural Language → AI → Python Script → PyNet → Navisworks → BIM Action
+Natural Language → AI → Python Script → PyNet → Autodesk → BIM Action
 
 | Component | Repository | Purpose |
 | :--- | :--- | :--- |
-| **PyNet Platform** | [rafa2403nunez-droid/PyNet](https://github.com/rafa2403nunez-droid/PyNet) | Navisworks/Revit plugin — hosts the Python.NET engine |
+| **PyNet Platform** | [rafa2403nunez-droid/PyNet](https://github.com/rafa2403nunez-droid/PyNet) | Navisworks, Revit & Civil 3D plugin — hosts the Python.NET engine |
 | **PyNet Bridge (MCP)** | This repo | MCP server - connects AI models to PyNET with including secure scripts validation|
 | **PyNet Library** | [rafa2403nunez-droid/PyNetLibrary](https://github.com/rafa2403nunez-droid/PyNetLibrary) | Script reference library and AI context |
 

@@ -74,8 +74,17 @@ Write-Host "Found: $pythonVersion" -ForegroundColor Green
 
 # --- Step 2: Install package ---
 Write-Host ""
-Write-Host "Installing pynet-mcp-bridge from PyPI..." -ForegroundColor Yellow
-pip install pynet-mcp-bridge --upgrade --quiet
+$hasUv = [bool](Get-Command uv -ErrorAction SilentlyContinue)
+
+if ($hasUv) {
+    Write-Host "Installing pynet-mcp-bridge via uv..." -ForegroundColor Yellow
+    uv tool install pynet-mcp-bridge --upgrade --quiet
+} else {
+    Write-Host "uv not found, falling back to pip..." -ForegroundColor DarkYellow
+    Write-Host "  (Tip: Install uv for faster installs -> https://docs.astral.sh/uv/)" -ForegroundColor DarkYellow
+    pip install pynet-mcp-bridge --upgrade --quiet
+}
+
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: Installation failed. Check your internet connection and try again." -ForegroundColor Red
     Read-Host "Press Enter to exit"
