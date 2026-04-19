@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pynet-mcp-bridge"
+version = "1.0.0"
+description = "MCP server that connects AI models with Autodesk Navisworks via the PyNet ecosystem."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "RAEN Digital Tools" }
+]
+keywords = ["mcp", "navisworks", "autodesk", "BIM", "pynet"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "mcp[cli]",
+    "psutil",
+    "fastmcp"
+]
+
+[project.urls]
+Homepage = "https://github.com/rafa2403nunez-droid/PyNetBridge"
+Repository = "https://github.com/rafa2403nunez-droid/PyNetBridge"
+
+[project.scripts]
+pynet-bridge = "pynet_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pynet_mcp"]
