@@ -1,5 +1,3 @@
-mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
-
 <p align="center">
   <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/PyNetBridge.png" width="300"/>
 </p>
@@ -295,6 +293,8 @@ Natural Language → AI → Python Script → PyNet → Autodesk → BIM Action
 This project is licensed under the MIT License.
 
 ---
+
+mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
 
 © 2026 RAEN Digital Tools. Todos los derechos reservados.
 Obra inscrita en el Registro de la Propiedad Intelectual de la Comunidad de Madrid.
