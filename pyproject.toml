@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pynet-mcp-bridge"
-version = "1.0.0"
+version = "1.4.2"
 description = "MCP server that connects AI models with Autodesk Navisworks via the PyNet ecosystem."
 readme = "README.md"
 license = { text = "MIT" }
@@ -30,6 +30,8 @@ Homepage = "https://github.com/rafa2403nunez-droid/PyNetBridge"
 Repository = "https://github.com/rafa2403nunez-droid/PyNetBridge"
 
 [project.scripts]
+pynet-mcp-bridge = "pynet_mcp.server:main"
+# Mantengo el viejo como alias por si acaso
 pynet-bridge = "pynet_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]

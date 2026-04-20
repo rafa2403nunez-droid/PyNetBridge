@@ -292,6 +292,8 @@ Natural Language → AI → Python Script → PyNet → Autodesk → BIM Action
 
 This project is licensed under the MIT License.
 
+mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
+
 ---
 <p align="center">
   Developed by <b>RAEN Digital Tools</b>
