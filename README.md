@@ -295,8 +295,10 @@ This project is licensed under the MIT License.
 mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
 
 ---
+
+© 2026 RAEN Digital Tools. Todos los derechos reservados.
+Obra inscrita en el Registro de la Propiedad Intelectual de la Comunidad de Madrid.
+
 <p align="center">
-  Developed by <b>RAEN Digital Tools</b>
-  <br/><br/>
   <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/RAENDigitalTools.png" alt="RAEN Digital Tools" width="200">
 </p>
