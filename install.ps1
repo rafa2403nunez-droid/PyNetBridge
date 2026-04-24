@@ -40,7 +40,12 @@ function Add-McpServer($configPath, $createEmpty) {
         $config | Add-Member -MemberType NoteProperty -Name mcpServers -Value ([PSCustomObject]@{})
     }
 
-    $entry = [PSCustomObject]@{ type = "stdio"; command = "pynet-bridge"; args = @() }
+    $entry = [PSCustomObject]@{
+        type    = "stdio"
+        command = "pynet-bridge"
+        args    = @()
+    }
+
     if ($config.mcpServers.PSObject.Properties['pynet-bridge']) {
         $config.mcpServers.'pynet-bridge' = $entry
     } else {
@@ -93,7 +98,6 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "uv not found. Installing uv..." -ForegroundColor Yellow
     try {
         Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
-        # Refresh PATH so uv is available in this session
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine")
     } catch {
         Write-Host "WARNING: Could not install uv automatically. Falling back to pip." -ForegroundColor DarkYellow
@@ -118,7 +122,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "Package installed successfully." -ForegroundColor Green
 
-# --- Step 3: Auto-detect and configure AI clients ---
+# --- Step 4: Resolve installed executable ---
+Write-Host ""
+Write-Host "Resolving pynet-bridge executable..." -ForegroundColor Yellow
+$bridgeCommand = (Get-Command pynet-bridge -ErrorAction SilentlyContinue).Source
+
+if (-not $bridgeCommand) {
+    Write-Host "ERROR: pynet-bridge was installed but not found." -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
+Write-Host "Using command: $bridgeCommand" -ForegroundColor Green
+
+# --- Step 5: Auto-detect and configure AI clients ---
 Write-Host ""
 Write-Host "Detecting installed AI clients..." -ForegroundColor Yellow
 
@@ -136,59 +153,61 @@ if ($storePkg) {
 
 if ($desktopConfig) {
     $ok = Add-McpServer $desktopConfig $true
-    if ($ok) {
-        Write-Host "  [OK] Claude Desktop: $desktopConfig" -ForegroundColor Green
-        $configured++
-    }
+    if ($ok) { Write-Host "  [OK] Claude Desktop" -ForegroundColor Green; $configured++ }
 } else {
-    Write-Host "  [--] Claude Desktop: not found, skipping" -ForegroundColor DarkGray
+    Write-Host "  [--] Claude Desktop: not found" -ForegroundColor DarkGray
 }
 
-# -- Claude Code (VS Code extension / CLI) --
-$claudeJson = "$env:USERPROFILE\.claude.json"
-$ok = Add-McpServer $claudeJson $true
-if ($ok) {
-    Write-Host "  [OK] Claude Code:    $claudeJson" -ForegroundColor Green
-    $configured++
-}
+# -- Claude Code --
+$ok = Add-McpServer "$env:USERPROFILE\.claude.json" $true
+if ($ok) { Write-Host "  [OK] Claude Code" -ForegroundColor Green; $configured++ }
 
 # -- Cline --
 $clinePath = "$env:APPDATA\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json"
 if (Test-Path (Split-Path $clinePath)) {
     $ok = Add-McpServer $clinePath $true
-    if ($ok) {
-        Write-Host "  [OK] Cline:          $clinePath" -ForegroundColor Green
-        $configured++
-    }
+    if ($ok) { Write-Host "  [OK] Cline" -ForegroundColor Green; $configured++ }
 } else {
-    Write-Host "  [--] Cline:          not found, skipping" -ForegroundColor DarkGray
+    Write-Host "  [--] Cline: not found" -ForegroundColor DarkGray
 }
 
 # -- Roo Code --
 $rooPath = "$env:APPDATA\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\mcp_settings.json"
 if (Test-Path (Split-Path $rooPath)) {
     $ok = Add-McpServer $rooPath $true
-    if ($ok) {
-        Write-Host "  [OK] Roo Code:       $rooPath" -ForegroundColor Green
-        $configured++
-    }
+    if ($ok) { Write-Host "  [OK] Roo Code" -ForegroundColor Green; $configured++ }
 } else {
-    Write-Host "  [--] Roo Code:       not found, skipping" -ForegroundColor DarkGray
+    Write-Host "  [--] Roo Code: not found" -ForegroundColor DarkGray
 }
+
+# --- Codex FIX (ONLY CHANGE) ---
+$codexPath = "$env:USERPROFILE\.codex\config.toml"
+
+$block = @(
+    "[mcp_servers.pynet-bridge]"
+    "command = ""$($bridgeCommand -replace '\\','/')"""   # 🔥 FIX MINIMO
+    "args = []"
+) -join "`r`n"
+
+$content = if (Test-Path $codexPath) {
+    [System.IO.File]::ReadAllText($codexPath, [System.Text.Encoding]::UTF8)
+} else { "" }
+
+$pattern = '(?ms)^\[mcp_servers\.pynet-bridge\]\s*.*?(?=^\[|\z)'
+
+if ([regex]::IsMatch($content, $pattern)) {
+    $content = [regex]::Replace($content, $pattern, $block + "`r`n`r`n")
+} else {
+    $content += "`r`n" + $block + "`r`n"
+}
+
+[System.IO.File]::WriteAllText($codexPath, $content, [System.Text.UTF8Encoding]::new($false))
 
 # --- Done ---
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-if ($configured -eq 0) {
-    Write-Host "   Installation complete!" -ForegroundColor Green
-    Write-Host "   No AI clients were detected."       -ForegroundColor DarkYellow
-    Write-Host "   Configure manually if needed."      -ForegroundColor DarkYellow
-} else {
-    Write-Host "   Installation complete!" -ForegroundColor Green
-    Write-Host "   Configured $configured client(s)."  -ForegroundColor Green
-    Write-Host "   Restart your AI client(s) to"       -ForegroundColor Cyan
-    Write-Host "   apply changes."                     -ForegroundColor Cyan
-}
+Write-Host "   Installation complete!" -ForegroundColor Green
+Write-Host "   Configured $configured client(s)." -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Read-Host "Press Enter to exit"

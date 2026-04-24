@@ -47,7 +47,7 @@ ALLOWED_REFERENCE_PREFIXES = (
 
 ALLOWED_PYTHON_IMPORTS = {
     "clr", "sys", "json", "re", "time", "datetime", "pathlib",
-    "typing", "threading", "collections", "xml",
+    "typing", "threading", "collections", "xml", "math",
     "pandas", "plotly", "matplotlib", "dash", "webbrowser",
     "psutil", "functools",
 }
