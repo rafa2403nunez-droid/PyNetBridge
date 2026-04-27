@@ -1,5 +1,3 @@
-mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
-
 <p align="center">
   <img src="https://github.com/rafa2403nunez-droid/PyNetBridge/blob/main/Assets/PyNetBridge.png" width="300"/>
 </p>
@@ -55,6 +53,7 @@ This will automatically:
    - **Claude Code** (VS Code extension / CLI)
    - **Cline** (VS Code extension)
    - **Roo Code** (VS Code extension)
+   - **Codex CLI** (`~/.codex/config.toml`)
 
 The `pynet-mcp-bridge` package includes:
 | Package | Purpose |
@@ -173,6 +172,16 @@ Add to `%APPDATA%\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\mc
 }
 ```
 
+**6. Configure Codex CLI:**
+
+Add to `%USERPROFILE%\.codex\config.toml`:
+
+```toml
+[mcp_servers.pynet-bridge]
+command = "C:/Users/<user>/.local/bin/pynet-bridge.exe"
+args = []
+```
+
 ---
 
 ## 🛠️ Available MCP Tools
@@ -225,7 +234,7 @@ Only these .NET references are permitted via `clr.AddReference`:
 - **PyNet plugins:** `Raen.Core.Pynet.*`, `Raen.{Product}.Pynet.*` (any version — e.g. `Raen.Core.Pynet.Resources`, `Raen.Navisworks.Pynet.2024`, `Raen.Civil3D.Pynet.2026`)
 
 ### Allowed Python Imports
-`clr`, `sys`, `json`, `re`, `time`, `datetime`, `pathlib`, `typing`, `threading`, `collections`, `xml`, `pandas`, `plotly`, `matplotlib`, `dash`, `webbrowser`, `psutil`, `functools`
+`clr`, `sys`, `json`, `re`, `time`, `datetime`, `pathlib`, `typing`, `threading`, `collections`, `xml`, `math`, `pandas`, `plotly`, `matplotlib`, `dash`, `webbrowser`, `psutil`, `functools`
 
 ### Allowed Python Submodules
 Some modules are allowed at the submodule level only, preventing access to dangerous siblings:
@@ -295,6 +304,8 @@ Natural Language → AI → Python Script → PyNet → Autodesk → BIM Action
 This project is licensed under the MIT License.
 
 ---
+
+mcp-name: io.github.rafa2403nunez-droid/pynet-mcp-bridge
 
 © 2026 RAEN Digital Tools. Todos los derechos reservados.
 Obra inscrita en el Registro de la Propiedad Intelectual de la Comunidad de Madrid.
