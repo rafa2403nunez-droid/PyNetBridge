@@ -176,6 +176,33 @@ if (Test-Path (Split-Path $rooPath)) {
     Write-Host "  [--] Roo Code:       not found, skipping" -ForegroundColor DarkGray
 }
 
+# -- Codex --
+$codexPath = "$env:USERPROFILE\.codex\config.toml"
+
+$block = @(
+    "[mcp_servers.pynet-bridge]"
+    "command = ""$($bridgeCommand -replace '\\','/')"""
+    "args = []"
+) -join "`r`n"
+
+$content = if (Test-Path $codexPath) {
+    [System.IO.File]::ReadAllText($codexPath, [System.Text.Encoding]::UTF8)
+} else { "" }
+
+$pattern = '(?ms)^\[mcp_servers\.pynet-bridge\]\s*.*?(?=^\[|\z)'
+
+if ([regex]::IsMatch($content, $pattern)) {
+    $content = [regex]::Replace($content, $pattern, $block + "`r`n`r`n")
+} else {
+    $content += "`r`n" + $block + "`r`n"
+}
+
+$codexDir = Split-Path $codexPath
+if (-not (Test-Path $codexDir)) { New-Item -ItemType Directory -Path $codexDir | Out-Null }
+[System.IO.File]::WriteAllText($codexPath, $content, [System.Text.UTF8Encoding]::new($false))
+Write-Host "  [OK] Codex" -ForegroundColor Green
+$configured++
+
 # --- Done ---
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
