@@ -13,6 +13,11 @@ Available integrations include **Navisworks Manage**, **Revit**, and **AutoCAD**
 
 This bridge acts as the connective tissue between AI logic and Autodesk desktop APIs, allowing for dynamic UI creation, script execution, and BIM process automation using natural language.
 
+
+| Tutorial | Description | Video |
+| :--- | :--- | :--- |
+| **PyNET and Codex Integration** | How to configure PyNet bridge with Codex and query into Navisworks. | [🎬 Watch here](https://youtu.be/HdmbCO_pTN0)  |
+
 ## 🔄 How it works
 
 1. The user describes a task in natural language.  
