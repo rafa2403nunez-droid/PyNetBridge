@@ -3,9 +3,9 @@
 </p>
 
 
-# 🐍 PyNet Platform Bridge (MCP)
+# 🐍 PyNet Platform Bridge
 
-**PyNet Platform Bridge (MCP)** is the execution layer that allows AI models to control Autodesk tools in real-time.
+**PyNet Platform Bridge** is the execution layer that allows AI models to control Autodesk tools in real-time.
 
 It connects Natural Language → Python → Autodesk desktop tools (Navisworks, Revit, AutoCAD), enabling AI to generate, execute, and refine BIM workflows autonomously.
 
