@@ -9,7 +9,7 @@
 
 It connects Natural Language → Python → Autodesk desktop tools (Navisworks, Revit, AutoCAD), enabling AI to generate, execute, and refine BIM workflows autonomously.
 
-Available integrations include **Navisworks Manage**, **Revit**, and **AutoCAD**.
+Available integrations include **Navisworks Manage**, **Revit**, and **Civil 3D**.
 
 This bridge acts as the connective tissue between AI logic and Autodesk desktop APIs, allowing for dynamic UI creation, script execution, and BIM process automation using natural language.
 
@@ -63,7 +63,7 @@ This will automatically:
 The `pynet-mcp-bridge` package includes:
 | Package | Purpose |
 | :--- | :--- |
-| **pynet-mcp-bridge** | MCP server that connects AI models with Autodesk Navisworks via PyNET |
+| **pynet-mcp-bridge** | MCP server that connects AI models with Autodesk tools via PyNET |
 | **mcp[cli]** | Model Context Protocol SDK and CLI tools |
 | **fastmcp** | High-level MCP server framework |
 | **psutil** | System process detection (finds running Autodesk instances) |
@@ -72,7 +72,7 @@ The `pynet-mcp-bridge` package includes:
 
 ### 📦 Python Libraries Starter Pack (optional)
 
-Install the recommended Python libraries for Navisworks/Revit scripting with PyNET:
+Install the recommended Python libraries for Navisworks, Revit and Civil 3D scripting with PyNET:
 
 ```powershell
 irm https://raw.githubusercontent.com/rafa2403nunez-droid/PyNetBridge/main/install-libraries.ps1 | iex
